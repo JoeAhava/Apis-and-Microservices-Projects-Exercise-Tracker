@@ -13,7 +13,6 @@ exports.create = (req, res) => {
   }
   
   //ensure username has not already been taken
-  
   //Create new athlete shortcut
   const newUser = new Athlete({
     "username": desiredUserName
@@ -29,7 +28,6 @@ exports.create = (req, res) => {
       message: err.message || "Error has occured in saving new user"
     });
   });
-  
 };
 
 // Retrieve and return all athletes from the database.
@@ -51,8 +49,8 @@ exports.findOne = (req, res) => {
     const userId = req.query.userId;
   
     //store optional parameters
-    let fromDate = req.query.from;
-    let toDate = req.query.to;
+    let fromDate = moment(req.query.from, "YYYY-MM-DD").toDate();
+    let toDate = moment(req.query.to, "YYYY-MM-DD").toDate();
     let logLimit = parseInt(req.query.limit);
   
     //validate date queries entered
@@ -67,51 +65,42 @@ exports.findOne = (req, res) => {
     const searchCriteria = {
       "_id" : userId
     };
-  
-    if(fromDate) {
-      searchCriteria["log.date"] = {
-        $gte: fromDate
-      };
-    };
-  
-    if(toDate) {
-      searchCriteria["log.date"] = {
-        $lte: toDate
-      };
-    };
-  
-    if(fromDate && toDate) {
-      searchCriteria["log.date"] = {
-        $gte: fromDate,
-        $lte: toDate
-      };
-    };
-  
-    //build projection
-    const projection = {
-      "log._id": 0,
-    };
-  
-    if(isNaN(logLimit)) { logLimit = null }
-  
-    if(logLimit) {
-      projection["log"] = { $slice:  logLimit }
-    };
     
-    Athlete.findOne(searchCriteria , projection)
+    Athlete.findOne( searchCriteria )
     .then(athlete => {
-      
       //return error if no results found
         if(!athlete) {
             return res.status(404).send({
                 message: "No record matching search criteria found"
             });            
         }
+      
+      let results = athlete.log //store log array
+       
+      if(fromDate) {
+         results = results.filter( (item) => {
+         return item.date >= fromDate
+         });
+       }
+       
+       if(toDate) {
+         results = results.filter( (item) => {
+         return item.date <= toDate
+         });
+       }
+       
+       if(fromDate && toDate) {
+         results = results.filter( (item) => {
+         return item.date >= fromDate && item.date <= toDate
+         });
+       }
+      
+        //console.log(athlete);
         res.send({
           "_id": athlete._id,
           "username":athlete.username,
-          "count": athlete.log.length,
-          "log": athlete.log
+          "count": results.length,
+          "log": results
         }); //send athlete data if user is found
       
     }).catch(err => {
@@ -121,7 +110,7 @@ exports.findOne = (req, res) => {
             });                
         }
         return res.status(500).send({
-          message: "Error in retrieving record with userId: " + userId
+          message: "Error in retrieving record with userId: " + userId + " Error: " + err.message
         });
     });
 };
@@ -134,7 +123,7 @@ exports.findByIdAndUpdate = (req, res) => {
     const activityDescription = req.body.description;
     const activityDuration = req.body.duration;
     const enteredDate = req.body.date;
-    const activityDate = enteredDate == null ? moment(req.body.date, "YYYY-MM-DD").format("YYYY-MM-DD") : moment().format("YYYY-MM-DD");
+    const activityDate = enteredDate == "" ? moment().toDate() : moment(req.body.date, "YYYY-MM-DD").toDate();
     const newLog = { description: activityDescription, duration: activityDuration, date: activityDate };
   
     Athlete.findByIdAndUpdate(
