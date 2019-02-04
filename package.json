@@ -7,13 +7,14 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "body-parser": "^1.15.2",
+    "cors": "^2.8.1",
     "express": "^5.0.0-alpha.2",
+    "heroku": "^7.19.4",
+    "moment": "^2.24.0",
     "mongodb": "^2.2.5",
     "mongoose": "^4.5.7",
-    "cors": "^2.8.1",
-    "body-parser": "^1.15.2",
-    "node": "^11.8.0",
-    "moment": "^2.24.0"
+    "node": "^11.8.0"
   },
   "engines": {
     "node": "10.0.0"
