@@ -21,7 +21,7 @@ app.use(express.static('public')); //serves the css file for index.html
 
 mongoose.Promise = global.Promise;
 
-mongoose.connect(dbConfig.url, { 
+mongoose.connect(process.env.MONGO_URI, { 
   useNewUrlParser: true 
 }).then( () => {
   console.log("Successfully connected to database");
